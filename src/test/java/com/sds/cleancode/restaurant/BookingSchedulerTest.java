@@ -3,6 +3,11 @@ package com.sds.cleancode.restaurant;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.RETURNS_MOCKS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,30 +17,42 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.paopao.customer.Customer;
 
+@RunWith(MockitoJUnitRunner.class)
 public class BookingSchedulerTest {
 	private static final int UNDER_CAPACITY = 1;
 	private static final int MAX_CAPACITY = 3;
 	private static final DateTimeFormatter DATE_TIME_FORMATTER= DateTimeFormat.forPattern("YYYY/MM/dd HH:mm");
 	private static final DateTime NOT_ON_THE_HOUR= DATE_TIME_FORMATTER.parseDateTime("2018/09/13 17:05");
 	private static final DateTime ON_THE_HOUR= DATE_TIME_FORMATTER.parseDateTime("2018/09/13 17:00");
-	private static final Customer CUSTOMER_WITHOUT_MAIL= new Customer("Yu", "010 1234 5678");
-	private static final Customer CUSTOMER_WITH_MAIL= new Customer("Yu", "010 1234 5678", "test@test.com");
+	private static final Customer CUSTOMER_WITHOUT_MAIL= mock(Customer.class);
+	private static final Customer CUSTOMER_WITH_MAIL= mock(Customer.class, RETURNS_MOCKS);
+	
+	@InjectMocks
 	private BookingScheduler booking= new BookingScheduler(MAX_CAPACITY);
 
+	@Spy
 	private List<Schedule> schedules= new ArrayList<>();
 	private TestableMailSender testableMailSender= new TestableMailSender();
 	private TestableSmsSender testableSmsSender= new TestableSmsSender();
+	
+	@Spy
 	private MailSender mailSender= new MailSender();
+	
+	@Spy
 	private SmsSender smsSender= new SmsSender();
 	
 	@Before
 	public void setUp() {
-		booking.setSchedules(schedules);
-		booking.setSmsSender(testableSmsSender);
-		booking.setMailSender(testableMailSender);
+		//booking.setSchedules(schedules);
+		//booking.setSmsSender(testableSmsSender);
+		//booking.setMailSender(testableMailSender);
 	}
 	
 	@Test(expected= RuntimeException.class)
@@ -89,7 +106,8 @@ public class BookingSchedulerTest {
 		
 		booking.addSchedule(schedule);
 		
-		assertThat(testableSmsSender.isSendMethodIsCalled(), is(true));
+		//assertThat(testableSmsSender.isSendMethodIsCalled(), is(true));
+		verify(smsSender, times(1)).send(schedule);
 	}
 	
 	@Test
@@ -98,14 +116,17 @@ public class BookingSchedulerTest {
 		
 		booking.addSchedule(schedule);
 		
-		assertThat(testableMailSender.getCountSendMailMethodIsCalled(), is(0));
+		//assertThat(testableMailSender.getCountSendMailMethodIsCalled(), is(0));
+		verify(mailSender, never()).sendMail(schedule);
+		verify(mailSender, times(0)).sendMail(schedule);
 	}
 	
 	@Test
 	public void email이_있는_경우_mail_발송() {
 		Schedule schedule= new Schedule(ON_THE_HOUR, MAX_CAPACITY, CUSTOMER_WITH_MAIL);
 		booking.addSchedule(schedule);
-		assertThat(testableMailSender.getCountSendMailMethodIsCalled(), is(1));
+		//assertThat(testableMailSender.getCountSendMailMethodIsCalled(), is(1));
+		verify(mailSender, times(1)).sendMail(schedule);
 	}
 	
 	@Test
