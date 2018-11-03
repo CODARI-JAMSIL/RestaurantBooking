@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ public class BookingSchedulerTest {
 	private static final Customer CUSTOMER_WITH_MAIL= mock(Customer.class, RETURNS_MOCKS);
 	
 	@InjectMocks
+	@Spy
 	private BookingScheduler booking= new BookingScheduler(MAX_CAPACITY);
 
 	@Spy
@@ -51,8 +53,8 @@ public class BookingSchedulerTest {
 	@Before
 	public void setUp() {
 		//booking.setSchedules(schedules);
-		//booking.setSmsSender(testableSmsSender);
-		//booking.setMailSender(testableMailSender);
+		//booking.setSmsSender(smsSender);
+		//booking.setMailSender(mailSender);
 	}
 	
 	@Test(expected= RuntimeException.class)
@@ -131,9 +133,10 @@ public class BookingSchedulerTest {
 	
 	@Test
 	public void 일요일인_경우_예외처리() {
-		String sunday= "2018/09/09 17:00";
 		try {
-			booking= new TestableBookingScheduler(MAX_CAPACITY, sunday);
+			//booking= new TestableBookingScheduler(MAX_CAPACITY, sunday);
+			DateTime sunday= DATE_TIME_FORMATTER.parseDateTime("2018/09/09 17:00");
+			when(booking.getNow()).thenReturn(sunday);
 			
 			booking.setSchedules(schedules);
 			booking.setSmsSender(testableSmsSender);
@@ -149,8 +152,9 @@ public class BookingSchedulerTest {
 	
 	@Test
 	public void 일요일_아닌경우_예약성공() {
-		String monday= "2018/09/10 17:00";
-		booking= new TestableBookingScheduler(MAX_CAPACITY, monday);
+		//booking= new TestableBookingScheduler(MAX_CAPACITY, monday);
+		DateTime monday= DATE_TIME_FORMATTER.parseDateTime("2018/09/10 17:00");
+		when(booking.getNow()).thenReturn(monday);
 		
 		booking.setSchedules(schedules);
 		booking.setSmsSender(testableSmsSender);
